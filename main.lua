@@ -2,9 +2,9 @@ require 'utils/color'
 require 'utils/table'
 require 'utils/palette'
 
-Object = require 'libs/classic'
+Object = require 'libs/classic/classic'
 Timer = require 'libs/hump/timer'
-Input = require 'libs/boipushy'
+Input = require 'libs/boipushy/Input'
 
 function love.load()
     input = Input()

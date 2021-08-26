@@ -1,0 +1,3 @@
+[submodule "libs/libs/boipushy"]
+	path = libs/libs/boipushy
+	url = https://github.com/a327ex/boipushy
