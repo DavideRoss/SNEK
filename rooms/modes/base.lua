@@ -131,19 +131,19 @@ function BaseSnek:draw()
     -- Frame text
     love.graphics.setColor(self.palette.text)
 
-    love.graphics.setFont(font_big)
+    love.graphics.setFont(fonts.big)
     love.graphics.printCentered(self.points, nil, 0)
-    love.graphics.setFont(font_medium_mono)
+    love.graphics.setFont(fonts.medium_mono)
     love.graphics.printCentered(self:format_timer(), nil, 65)
 
-    love.graphics.setFont(font_medium)
+    love.graphics.setFont(fonts.medium)
     love.graphics.print('Mode', 32, 22)
-    love.graphics.setFont(font_mediumbold)
+    love.graphics.setFont(fonts.medium_bold)
     love.graphics.print(self.parent.name, 32, 48)
 
-    love.graphics.setFont(font_medium)
+    love.graphics.setFont(fonts.medium)
     love.graphics.printRight('Record', 32, 22)
-    love.graphics.setFont(font_mediumbold)
+    love.graphics.setFont(fonts.medium_bold)
     love.graphics.printRight(tostring(self.record or '???'), 32, 48)
 end
 

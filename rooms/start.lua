@@ -6,10 +6,10 @@ local blend_interval = 3
 function StartRoom:new()
     self.timer = Timer()
 
-    love.graphics.setFont(font_title)
+    love.graphics.setFont(fonts.title)
 
-    self.title_width = font_title:getWidth('SNEK')
-    self.subtitle_height = font_subtitle:getWidth('Press any key')
+    self.title_width = fonts.title:getWidth('SNEK')
+    self.subtitle_height = fonts.big:getWidth('Press any key')
 
     self.dtotal = 0
 
@@ -31,11 +31,11 @@ function StartRoom:draw()
     love.graphics.setBackgroundColor(self.bg_color)
 
     love.graphics.setColor(self.text_color)
-    love.graphics.setFont(font_title)
+    love.graphics.setFont(fonts.title)
     love.graphics.print('SNEK', 512, 100, 0, 1, 1, math.round(self.title_width / 2), 0)
 
     love.graphics.setColor(self.text_color)
-    love.graphics.setFont(font_subtitle)
+    love.graphics.setFont(fonts.big)
     love.graphics.print('Press any key', 512, 600, 0, 1, 1, math.round(self.subtitle_height / 2), math.sin(math.rad(self.dtotal * 200)) * 20)
 end
 

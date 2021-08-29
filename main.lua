@@ -8,11 +8,14 @@ require 'utils/table'
 require 'utils/palette'
 require 'utils/extension'
 require 'utils/serial'
+require 'utils/fonts'
 
 -- TODO: rename functions and variables as Lua style standards
 
 function love.load()
     input = Input()
+
+    FontLoader.initialize()
 
     local room_files = {}
     recursiveEnumerate('rooms', room_files)
@@ -21,16 +24,6 @@ function love.load()
     local ui_files = {}
     recursiveEnumerate('ui', ui_files)
     requireFiles(ui_files)
-
-    -- https://www.dafont.com/it/pixel-operator.font?text=Ye+Olde+Classic+SNEK
-    font_main = love.graphics.newFont('assets/fonts/nokiafc22.ttf')
-    font_title = love.graphics.newFont('assets/fonts/main.ttf', 200)
-    font_subtitle = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 72)
-    font_big = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 72)
-    font_mediumbold = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 24)
-    font_medium = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator.ttf', 24)
-    font_medium_mono = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperatorMono.ttf', 24)
-    love.graphics.setFont(font_main)
 
     -- TODO: check if file exists
     serial = Serial('./snek.sav')
