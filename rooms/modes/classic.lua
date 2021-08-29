@@ -6,10 +6,11 @@ function ModeClassic:new()
     self.base = BaseSnek(self)
 
     self.palette = palettes.classic
-    self.base.starting_fruits = 30
+    self.base.starting_fruits = 1
     self.base.step_initial = .25
     
     self.base.on_fruit = self.on_fruit
+    self.base.on_death = self.on_death
 
     self.base:init()
 
@@ -31,4 +32,8 @@ end
 function ModeClassic:on_fruit()
     self.base:add_fruit()
     if self.base.step > .05 then self.base.step = self.base.step - .0025 end
+end
+
+function ModeClassic:on_death()
+    print('on death trigger')
 end

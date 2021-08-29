@@ -35,15 +35,16 @@ function GridRoom:new()
     for row = 0, rows - 1 do
         for i = 0, count - 1 do
             if modes[row * 4 + i + 1] then
-                local newButton = Button(self, margin * (i + 1) + cell_width * i, initial_offset + row * 128 + (margin * row), cell_width, 128)
+                local newButton = Button(self, modes[row * 4 + i + 1], margin * (i + 1) + cell_width * i, initial_offset + row * 128 + (margin * row), cell_width, 128)
                 newButton.label = modes[row * 4 + i + 1].label
-                newButton.object = modes[row * 4 + i + 1]
                 newButton.on_click = self.on_click
 
                 table.insert(self.controls, newButton)
             end
         end
     end
+
+    self.controls[5].enabled = false
 end
 
 function GridRoom:update(dt)

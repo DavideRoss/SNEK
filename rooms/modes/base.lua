@@ -7,7 +7,7 @@
 -- EVENTS
 -- on_step
 -- on_fruit
--- on_death TODO:
+-- on_death
 
 -- FUNCTIONS
 -- add_fruit (TODO: make it plural)
@@ -134,7 +134,7 @@ function BaseSnek:draw()
     love.graphics.setFont(fonts.big)
     love.graphics.printCentered(self.points, nil, 0)
     love.graphics.setFont(fonts.medium_mono)
-    love.graphics.printCentered(self:format_timer(), nil, 65)
+    love.graphics.printCentered(format_timer(self.total_timer), nil, 65)
 
     love.graphics.setFont(fonts.medium)
     love.graphics.print('Mode', 32, 22)
@@ -144,7 +144,7 @@ function BaseSnek:draw()
     love.graphics.setFont(fonts.medium)
     love.graphics.printRight('Record', 32, 22)
     love.graphics.setFont(fonts.medium_bold)
-    love.graphics.printRight(tostring(self.record or '???'), 32, 48)
+    love.graphics.printRight(tostring(self.record.score or '???'), 32, 48)
 end
 
 function BaseSnek:draw_tile(pos)
@@ -179,7 +179,7 @@ function BaseSnek:do_step()
     self.head_pos.y = self.head_pos.y + self.mov.y
 
     -- Self collision
-    if M.find(self.tail_pos, self.head_pos) then self:on_death() end
+    if M.find(self.tail_pos, self.head_pos) then self:on_collision() end
 
     -- Fruit catching
     local fruit_index = M.find(self.fruits, self.head_pos)
@@ -209,20 +209,16 @@ function BaseSnek:add_fruit()
     })
 end
 
-function BaseSnek:format_timer()
-    local decimals = math.min(99, (self.total_timer - math.floor(self.total_timer)) * 100)
-    local seconds = math.floor(self.total_timer)
-    local minutes = math.floor(self.total_timer / 60)
-
-    return string.format('%.2d:%.2d.%.2d', minutes, seconds, decimals)
-end
-
-function BaseSnek:on_death()
+function BaseSnek:on_collision()
     self.alive = false
 
-    if self.record == nil or self.points > self.record then
-        self.record = self.points
-        serial:setRecord(self.parent.handle, self.points)
+    if self.record.score == nil or self.points > self.record.score then
+        self.record.score = self.points
+        self.record.time = self.total_timer
+
+        serial:setRecord(self.parent.handle, self.points, self.total_timer)
         serial:save()
     end
+
+    if self.on_death then self.on_death(self.parent) end
 end

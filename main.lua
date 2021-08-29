@@ -9,6 +9,7 @@ require 'utils/palette'
 require 'utils/extension'
 require 'utils/serial'
 require 'utils/fonts'
+require 'utils/misc'
 
 -- TODO: rename functions and variables as Lua style standards
 

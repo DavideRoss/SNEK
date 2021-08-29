@@ -25,3 +25,16 @@ end
 function math.round(n)
     return math.floor(n + .5)
 end
+
+-- TODO: refactor print function naming
+function love.graphics.centered(text, orig_x, orig_y, w, h, dx, dy)
+    local font = love.graphics.getFont()
+    
+    local width = font:getWidth(text)
+    local height = font:getHeight()
+
+    local x = orig_x + (w / 2) - (width / 2) + dx
+    local y = orig_y + (h / 2) - (height / 2) + dy
+
+    love.graphics.print(text, x, y)
+end

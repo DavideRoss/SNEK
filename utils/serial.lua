@@ -7,13 +7,11 @@ function Serial:new(filename)
 
     self.object = {
         records = {
-            classic = nil
         }
     }
 end
 
 function Serial:save()
-    -- local data = binser.serialize(self.object)
     binser.writeFile(self.filename, self.object)
 end
 
@@ -23,9 +21,19 @@ function Serial:load()
 end
 
 function Serial:getRecord(handle)
-    return self.object.records[handle]
+    if self.object.records[handle] then
+        return self.object.records[handle]
+    else
+        return {
+            score = nil,
+            time = nil
+        }
+    end
 end
 
-function Serial:setRecord(handle, points)
-    self.object.records[handle] = points
+function Serial:setRecord(handle, points, time)
+    self.object.records[handle] = {
+        score = points,
+        time = time
+    }
 end
