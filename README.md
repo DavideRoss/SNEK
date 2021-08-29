@@ -26,3 +26,6 @@ Every a certain amount of time, controls will be inverted.
 
 ### Lawnmower
 All the arena is covered in fruits.
+
+### Race
+Pass thru gates in the right direction.

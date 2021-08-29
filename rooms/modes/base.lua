@@ -1,8 +1,8 @@
 -- PARAMETERS
 -- starting_fruits
--- step_decrease TODO:
--- min_step TODO:
--- palette TODO:
+-- step_initial
+-- step
+-- palette
 
 -- EVENTS
 -- on_step
@@ -15,6 +15,8 @@
 
 -- TODO: add walls support
 -- TODO: animate tiles
+-- TODO: dynamic start positions
+-- TODO: add arrows on controls
 
 BaseSnek = Object:extend()
 
@@ -37,6 +39,13 @@ function BaseSnek:new(parent)
     input:bind('a', 'left')
     input:bind('s', 'down')
     input:bind('d', 'right')
+
+    -- Load record
+    self.record = serial:getRecord(self.parent.handle)
+
+    self.palette = palettes.classic
+
+    love.graphics.setBackgroundColor(self.palette.background)
 end
 
 function BaseSnek:init()
@@ -45,7 +54,8 @@ function BaseSnek:init()
     self.points = 0
 
     self.timer = 0
-    self.step = .1
+    self.total_timer = 0
+    self.step = self.step_initial or .25
 
     self.mov = { x = -1, y = 0 }
     self.next_mov = nil
@@ -53,13 +63,7 @@ function BaseSnek:init()
     self.head_pos = { x = 14, y = 15}
     self.tail_pos = {
         { x = 15, y = 15},
-        { x = 16, y = 15},
-        -- { x = 17, y = 15},
-        -- { x = 18, y = 15},
-        -- { x = 19, y = 15},
-        -- { x = 20, y = 15},
-        -- { x = 21, y = 15},
-        -- { x = 22, y = 15}
+        { x = 16, y = 15}
     }
 
     self.fruits = {}
@@ -80,6 +84,7 @@ function BaseSnek:update(dt)
         if input:pressed('right') and self.mov.x == 0 then self.next_mov = { x = 1, y = 0 } end
 
         self.timer = self.timer + dt
+        self.total_timer = self.total_timer + dt
 
         if self.timer > self.step then
             self.timer = self.timer - self.step
@@ -89,8 +94,24 @@ function BaseSnek:update(dt)
 end
 
 function BaseSnek:draw()
+    -- Fruits
+    love.graphics.setColor(self.palette.fruit)
+    for i = 1, #self.fruits do
+        self:draw_tile(self.fruits[i])
+    end
+
+    -- Tail
+    love.graphics.setColor(self.palette.tail)
+    for i = 1, #self.tail_pos do
+        self:draw_tile(self.tail_pos[i])
+    end
+
+    -- Head
+    love.graphics.setColor(self.palette.head)
+    self:draw_tile(self.head_pos)
+
     -- Grid
-    love.graphics.setColor({ .3, .3, .3, 1 })
+    love.graphics.setColor(self.palette.grid)
 
     for i = 0, 32 do
         love.graphics.line(i * 32, 0, i * 32, 1024)
@@ -100,47 +121,34 @@ function BaseSnek:draw()
         love.graphics.line(0, i * 32, 1024, i * 32)
     end
 
-    -- Fruits
-    love.graphics.setColor({ .1, .9, .1, 1})
-    for i = 1, #self.fruits do
-        self:draw_tile(self.fruits[i])
-    end
-
-    -- Tail
-    love.graphics.setColor({ .9, .64, .2, 1 })
-    for i = 1, #self.tail_pos do
-        self:draw_tile(self.tail_pos[i])
-    end
-
-    -- Head
-    love.graphics.setColor({ 1, 0, 0, 1 })
-    self:draw_tile(self.head_pos)
-
     -- Frame
-    love.graphics.setColor({ .5, .5, .5, 1})
+    love.graphics.setColor(self.palette.frame)
     love.graphics.rectangle('fill', 0, 0, 1024, 32 * limits.top)
     love.graphics.rectangle('fill', 0, 32 * limits.top, 32 * limits.left, 32 * (32 - limits.top))
     love.graphics.rectangle('fill', 992, 32 * limits.top, 32 * limits.right, 32 * (32 - limits.top))
     love.graphics.rectangle('fill', 32 * limits.right, 1024 - (32 * limits.bottom), 1024 - (32 * (limits.right + limits.left)), 32 * limits.bottom)
 
-    -- Frame test
-    love.graphics.setColor({ 1, 1, 1 })
+    -- Frame text
+    love.graphics.setColor(self.palette.text)
+
     love.graphics.setFont(font_big)
-    love.graphics.printCentered(self.points, nil, 10)
+    love.graphics.printCentered(self.points, nil, 0)
+    love.graphics.setFont(font_medium_mono)
+    love.graphics.printCentered(self:format_timer(), nil, 65)
 
     love.graphics.setFont(font_medium)
-    love.graphics.print('Mode', 32, 25)
+    love.graphics.print('Mode', 32, 22)
     love.graphics.setFont(font_mediumbold)
-    love.graphics.print(self.parent.name, 32, 45)
+    love.graphics.print(self.parent.name, 32, 48)
 
     love.graphics.setFont(font_medium)
-    love.graphics.printRight('Record', 32, 25)
+    love.graphics.printRight('Record', 32, 22)
     love.graphics.setFont(font_mediumbold)
-    love.graphics.printRight('999', 32, 45)
+    love.graphics.printRight(tostring(self.record or '???'), 32, 48)
 end
 
 function BaseSnek:draw_tile(pos)
-    love.graphics.rectangle('fill', pos.x * 32 + 1, pos.y * 32 + 1, 30, 30)
+    love.graphics.rectangle('fill', pos.x * 32, pos.y * 32, 32, 32)
 end
 
 function BaseSnek:do_step()
@@ -171,7 +179,7 @@ function BaseSnek:do_step()
     self.head_pos.y = self.head_pos.y + self.mov.y
 
     -- Self collision
-    if M.find(self.tail_pos, self.head_pos) then self.alive = false end
+    if M.find(self.tail_pos, self.head_pos) then self:on_death() end
 
     -- Fruit catching
     local fruit_index = M.find(self.fruits, self.head_pos)
@@ -199,4 +207,22 @@ function BaseSnek:add_fruit()
         x = love.math.random(limits.left, 31 - limits.right),
         y = love.math.random(limits.top, 31 - limits.bottom)
     })
+end
+
+function BaseSnek:format_timer()
+    local decimals = math.min(99, (self.total_timer - math.floor(self.total_timer)) * 100)
+    local seconds = math.floor(self.total_timer)
+    local minutes = math.floor(self.total_timer / 60)
+
+    return string.format('%.2d:%.2d.%.2d', minutes, seconds, decimals)
+end
+
+function BaseSnek:on_death()
+    self.alive = false
+
+    if self.record == nil or self.points > self.record then
+        self.record = self.points
+        serial:setRecord(self.parent.handle, self.points)
+        serial:save()
+    end
 end

@@ -25,3 +25,16 @@ palette_names = {
     'blue',
     'darkBlue',
 }
+
+palettes = {
+    classic = {
+        background = rgb('#2a9d8f'),
+        grid = rgb('#00000011'),
+        frame = rgb('#264653'),
+        head = rgb('#e76f51'),
+        tail = rgb('#f4a261'),
+        fruit = rgb('#e9c46a'),
+        wall = rgb('#264653'),
+        text = rgb('#ffffff')
+    }
+}

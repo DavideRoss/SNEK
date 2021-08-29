@@ -1,0 +1,8 @@
+{
+    "colorInfo.languages": [
+        {
+            "selector": "lua",
+            "colors": "css"
+        }
+    ]
+}

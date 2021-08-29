@@ -10,3 +10,6 @@
 [submodule "libs/Moses"]
 	path = libs/Moses
 	url = git@github.com:Yonaba/Moses.git
+[submodule "libs/binser"]
+	path = libs/binser
+	url = git@github.com:bakpakin/binser.git
