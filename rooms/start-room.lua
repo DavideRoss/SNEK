@@ -32,11 +32,11 @@ function StartRoom:draw()
 
     love.graphics.setColor(self.text_color)
     love.graphics.setFont(font_title)
-    love.graphics.print('SNEK', 512, 100, 0, 1, 1, self.title_width / 2, 0)
+    love.graphics.print('SNEK', 512, 100, 0, 1, 1, math.round(self.title_width / 2), 0)
 
     love.graphics.setColor(self.text_color)
     love.graphics.setFont(font_subtitle)
-    love.graphics.print('Press any key', 512, 600, 0, 1, 1, self.subtitle_height / 2, math.sin(math.rad(self.dtotal * 200)) * 20)
+    love.graphics.print('Press any key', 512, 600, 0, 1, 1, math.round(self.subtitle_height / 2), math.sin(math.rad(self.dtotal * 200)) * 20)
 end
 
 function StartRoom:colorBlend()

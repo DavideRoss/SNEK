@@ -23,3 +23,5 @@ function lerpRGB(t, hex1, hex2)
         u * a1 + t * a2
     }
 end
+
+-- TODO: join with palette

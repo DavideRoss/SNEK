@@ -1,10 +1,12 @@
-require 'utils/color'
-require 'utils/table'
-require 'utils/palette'
-
 Object = require 'libs/classic/classic'
 Timer = require 'libs/hump/timer'
 Input = require 'libs/boipushy/Input'
+M = require 'libs/Moses/moses'
+
+require 'utils/color'
+require 'utils/table'
+require 'utils/palette'
+require 'utils/extension'
 
 function love.load()
     input = Input()
@@ -13,9 +15,13 @@ function love.load()
     recursiveEnumerate('rooms', room_files)
     requireFiles(room_files)
 
-    font_main = love.graphics.newFont('assets/fonts/main.ttf')
+    -- https://www.dafont.com/it/pixel-operator.font?text=Ye+Olde+Classic+SNEK
+    font_main = love.graphics.newFont('assets/fonts/nokiafc22.ttf')
     font_title = love.graphics.newFont('assets/fonts/main.ttf', 200)
-    font_subtitle = love.graphics.newFont('assets/fonts/main.ttf', 36)
+    font_subtitle = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 72)
+    font_big = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 72)
+    font_mediumbold = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator-Bold.ttf', 24)
+    font_medium = love.graphics.newFont('assets/fonts/pixel_operator/PixelOperator.ttf', 24)
     love.graphics.setFont(font_main)
 
     current_room = nil

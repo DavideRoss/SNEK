@@ -1,14 +1,28 @@
 ModeClassic = Object:extend()
 
 function ModeClassic:new()
+    self.name = 'Ye Olde Classic'
+    self.base = BaseSnek(self)
+
+    self.base.starting_fruits = 30
+    
+    self.base.on_fruit = self.on_fruit
+
+    self.base:init()
 end
 
 function ModeClassic:update(dt)
+    self.base:update(dt)
 end
 
 function ModeClassic:draw()
-    love.graphics.setBackgroundColor({ 0, 0, 0, 1 })
-    love.graphics.setColor({ 1, 1, 1, 1 })
+    self.base:draw(dt)
+end
 
-    love.graphics.print('ModeClassic mode', 10, 10)
+function ModeClassic:on_step()
+    print(self.test)
+end
+
+function ModeClassic:on_fruit()
+    self.base:add_fruit()
 end
