@@ -17,10 +17,11 @@
 -- TODO: animate tiles
 -- TODO: dynamic start positions
 -- TODO: add arrows on controls
+-- TODO: add settings object on new
 
 BaseSnek = Object:extend()
 
-local limits = {
+BaseSnek.limits = {
     top = 3,
     left = 1,
     right = 1,
@@ -60,10 +61,10 @@ function BaseSnek:init()
     self.mov = { x = -1, y = 0 }
     self.next_mov = nil
 
-    self.head_pos = { x = 14, y = 15}
-    self.tail_pos = {
-        { x = 15, y = 15},
-        { x = 16, y = 15}
+    self.head = Block(self.palette.head, 14, 15)
+    self.tail = {
+        Block(self.palette.tail, 15, 15),
+        Block(self.palette.tail, 16, 15)
     }
 
     self.fruits = {}
@@ -95,38 +96,25 @@ end
 
 function BaseSnek:draw()
     -- Fruits
-    love.graphics.setColor(self.palette.fruit)
-    for i = 1, #self.fruits do
-        self:draw_tile(self.fruits[i])
-    end
+    for i = 1, #self.fruits do self.fruits[i]:draw() end
 
     -- Tail
-    love.graphics.setColor(self.palette.tail)
-    for i = 1, #self.tail_pos do
-        self:draw_tile(self.tail_pos[i])
-    end
+    for i = 1, #self.tail do self.tail[i]:draw() end
 
     -- Head
-    love.graphics.setColor(self.palette.head)
-    self:draw_tile(self.head_pos)
+    self.head:draw()
 
     -- Grid
     love.graphics.setColor(self.palette.grid)
-
-    for i = 0, 32 do
-        love.graphics.line(i * 32, 0, i * 32, 1024)
-    end
-
-    for i = 0, 32 do
-        love.graphics.line(0, i * 32, 1024, i * 32)
-    end
+    for i = 0, 32 do love.graphics.line(i * 32, 0, i * 32, 1024) end
+    for i = 0, 32 do love.graphics.line(0, i * 32, 1024, i * 32) end
 
     -- Frame
     love.graphics.setColor(self.palette.frame)
-    love.graphics.rectangle('fill', 0, 0, 1024, 32 * limits.top)
-    love.graphics.rectangle('fill', 0, 32 * limits.top, 32 * limits.left, 32 * (32 - limits.top))
-    love.graphics.rectangle('fill', 992, 32 * limits.top, 32 * limits.right, 32 * (32 - limits.top))
-    love.graphics.rectangle('fill', 32 * limits.right, 1024 - (32 * limits.bottom), 1024 - (32 * (limits.right + limits.left)), 32 * limits.bottom)
+    love.graphics.rectangle('fill', 0, 0, 1024, 32 * BaseSnek.limits.top)
+    love.graphics.rectangle('fill', 0, 32 * BaseSnek.limits.top, 32 * BaseSnek.limits.left, 32 * (32 - BaseSnek.limits.top))
+    love.graphics.rectangle('fill', 992, 32 * BaseSnek.limits.top, 32 * BaseSnek.limits.right, 32 * (32 - BaseSnek.limits.top))
+    love.graphics.rectangle('fill', 32 * BaseSnek.limits.right, 1024 - (32 * BaseSnek.limits.bottom), 1024 - (32 * (BaseSnek.limits.right + BaseSnek.limits.left)), 32 * BaseSnek.limits.bottom)
 
     -- Frame text
     love.graphics.setColor(self.palette.text)
@@ -156,16 +144,17 @@ function BaseSnek:do_step()
 
     -- Tail following
     self.last_tail = {
-        x = self.tail_pos[#self.tail_pos].x,
-        y = self.tail_pos[#self.tail_pos].y
+        x = self.tail[#self.tail].x,
+        y = self.tail[#self.tail].y
     }
 
-    for i = #self.tail_pos, 2, -1 do
-        self.tail_pos[i].x = self.tail_pos[i - 1].x
-        self.tail_pos[i].y = self.tail_pos[i - 1].y
+    for i = #self.tail, 2, -1 do
+        self.tail[i].x = self.tail[i - 1].x
+        self.tail[i].y = self.tail[i - 1].y
     end
-    self.tail_pos[1].x = self.head_pos.x
-    self.tail_pos[1].y = self.head_pos.y
+
+    self.tail[1].x = self.head.x
+    self.tail[1].y = self.head.y
 
     -- Head movement
     if self.next_mov then
@@ -175,17 +164,25 @@ function BaseSnek:do_step()
         self.next_mov = nil
     end
 
-    self.head_pos.x = self.head_pos.x + self.mov.x
-    self.head_pos.y = self.head_pos.y + self.mov.y
+    self.head.x = self.head.x + self.mov.x
+    self.head.y = self.head.y + self.mov.y
 
     -- Self collision
-    if M.find(self.tail_pos, self.head_pos) then self:on_collision() end
+    local head_pos = self.head:getPosition()
+    for i, tail in ipairs(self.tail) do
+        if head_pos.x == tail.x and head_pos.y == tail.y then self:on_collision() end
+    end
 
     -- Fruit catching
-    local fruit_index = M.find(self.fruits, self.head_pos)
+    -- local fruit_index = M.find(self.fruits, self.head:getPosition())
+    local fruit_index = nil
+    for i, fruit in ipairs(self.fruits) do
+        if head_pos.x == fruit.x and head_pos.y == fruit.y then fruit_index = i end
+    end
+
     if fruit_index then
         self.points = self.points + 1
-        table.insert(self.tail_pos, self.last_tail)
+        table.insert(self.tail, Block(self.palette.tail, self.last_tail.x, self.last_tail.y))
 
         self.fruits[fruit_index] = nil
         self.fruits = M.compact(self.fruits)
@@ -194,19 +191,20 @@ function BaseSnek:do_step()
     end
 
     -- Warping
-    if self.head_pos.x < limits.left then self.head_pos.x = 31 - limits.right end
-    if self.head_pos.x > 31 - limits.right then self.head_pos.x = limits.left end
+    local arena_width = 31 - BaseSnek.limits.left - BaseSnek.limits.right
+    local arena_height = 31 - BaseSnek.limits.top - BaseSnek.limits.bottom
+    if self.head.x < 0 then self.head.x = arena_width end
+    if self.head.x > arena_width then self.head.x = 0 end
 
-    if self.head_pos.y < limits.top then self.head_pos.y = 31 - limits.bottom end
-    if self.head_pos.y > 31 - limits.bottom then self.head_pos.y = limits.top end
+    if self.head.y < 0 then self.head.y = arena_height end
+    if self.head.y > arena_height then self.head.y = 0 end
 end
 
 -- TODO: make sure the fruit doesn't spawn on head, tail, walls or other fruits
 function BaseSnek:add_fruit()
-    table.insert(self.fruits, {
-        x = love.math.random(limits.left, 31 - limits.right),
-        y = love.math.random(limits.top, 31 - limits.bottom)
-    })
+    local x = love.math.random(BaseSnek.limits.left, 31 - BaseSnek.limits.right)
+    local y = love.math.random(BaseSnek.limits.top, 31 - BaseSnek.limits.bottom)
+    table.insert(self.fruits, Block(self.palette.fruit, x, y))
 end
 
 function BaseSnek:on_collision()

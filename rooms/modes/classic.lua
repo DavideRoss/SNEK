@@ -6,7 +6,7 @@ function ModeClassic:new()
     self.base = BaseSnek(self)
 
     self.palette = palettes.classic
-    self.base.starting_fruits = 1
+    self.base.starting_fruits = 30
     self.base.step_initial = .25
     
     self.base.on_fruit = self.on_fruit

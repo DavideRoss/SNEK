@@ -29,3 +29,6 @@ All the arena is covered in fruits.
 
 ### Race
 Pass thru gates in the right direction.
+
+### Angler
+You can see the fruits only when you are near enough.

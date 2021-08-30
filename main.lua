@@ -11,6 +11,9 @@ require 'utils/serial'
 require 'utils/fonts'
 require 'utils/misc'
 
+require 'gameplay/base'
+require 'gameplay/block'
+
 -- TODO: rename functions and variables as Lua style standards
 
 function love.load()
@@ -32,7 +35,7 @@ function love.load()
 
     current_room = nil
     -- TODO: replace with StartRoom in production
-    goToRoom('GridRoom')
+    goToRoom('ModeClassic')
 end
 
 function love.update(dt)
