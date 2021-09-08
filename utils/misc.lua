@@ -5,3 +5,9 @@ function format_timer(timer)
 
     return string.format('%.2d:%.2d.%.2d', minutes, seconds, decimals)
 end
+
+function clamp01(val)
+    if val < 0 then return 0 end
+    if val > 1 then return 1 end
+    return val
+end

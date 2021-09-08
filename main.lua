@@ -3,6 +3,8 @@ Timer = require 'libs/hump/timer'
 Input = require 'libs/boipushy/Input'
 M = require 'libs/Moses/moses'
 
+require 'objects/vector'
+
 require 'utils/color'
 require 'utils/table'
 require 'utils/palette'
@@ -13,6 +15,9 @@ require 'utils/misc'
 
 require 'gameplay/base'
 require 'gameplay/block'
+require 'gameplay/fruit'
+require 'gameplay/head'
+require 'gameplay/tail'
 
 -- TODO: rename functions and variables as Lua style standards
 
@@ -36,6 +41,10 @@ function love.load()
     current_room = nil
     -- TODO: replace with StartRoom in production
     goToRoom('ModeClassic')
+
+    local vec1 = Vector(3, 2)
+    local vec2 = Vector(3, 2)
+    print(vec1 + vec2)
 end
 
 function love.update(dt)
@@ -44,6 +53,9 @@ end
 
 function love.draw()
     if current_room then current_room:draw() end
+
+    -- TODO: remove in prod
+    love.graphics.print('FPS: '..tostring(love.timer.getFPS()), 10, 1000)
 end
 
 --- EVENTS ---

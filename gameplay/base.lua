@@ -1,23 +1,26 @@
--- PARAMETERS
--- starting_fruits
--- step_initial
--- step
--- palette
+--[[
+    PARAMETERS
+    - starting_fruits
+    - step_initial
+    - step
+    - palette
 
--- EVENTS
--- on_step
--- on_fruit
--- on_death
+    EVENTS
+    - on_step
+    - on_fruit
+    - on_death
 
--- FUNCTIONS
--- add_fruit (TODO: make it plural)
--- decrease_step TODO:
+    FUNCTIONS
+    - add_fruit (TODO: make it plural)
+    - decrease_step TODO:
 
--- TODO: add walls support
--- TODO: animate tiles
--- TODO: dynamic start positions
--- TODO: add arrows on controls
--- TODO: add settings object on new
+    - TODO: add custom blocks support (walls...)
+    - TODO: dynamic start positions
+    - TODO: add arrows on controls
+    - TODO: add settings object on new
+
+    - TODO: convert every position to Vector2?
+]]
 
 BaseSnek = Object:extend()
 
@@ -27,6 +30,29 @@ BaseSnek.limits = {
     right = 1,
     bottom = 2
 }
+
+------------------------------------------------------------------------------
+
+function BaseSnek.warp(pos)
+    local arena_width = 31 - BaseSnek.limits.left - BaseSnek.limits.right
+    local arena_height = 31 - BaseSnek.limits.top - BaseSnek.limits.bottom
+    local x = pos.x
+    local y = pos.y
+
+    local xo = pos.x
+    local yo = pos.y
+
+    if x < 0 then x = arena_width; xo = arena_width + 1 end
+    if x > arena_width then x = 0; xo = -1 end
+
+    if y < 0 then y = arena_height; yo = arena_height + 1 end
+    if y > arena_height then y = 0; yo = -1 end
+
+    local warped = pos.x ~= x or pos.y ~= y
+    return warped, { x = x, y = y}, { x = xo, y = yo }
+end
+
+------------------------------------------------------------------------------
 
 function BaseSnek:new(parent)
     self.parent = parent
@@ -61,22 +87,30 @@ function BaseSnek:init()
     self.mov = { x = -1, y = 0 }
     self.next_mov = nil
 
-    self.head = Block(self.palette.head, 14, 15)
+    self.head = Head(self.palette.head, 5, 15, { duration = self.step / 2.0 })
     self.tail = {
-        Block(self.palette.tail, 15, 15),
-        Block(self.palette.tail, 16, 15)
+        Tail(self.palette.tail, 6, 15, { duration = self.step / 2.0 }),
+        Tail(self.palette.tail, 7, 15, { duration = self.step / 2.0 })
+        -- Tail(self.palette.tail, 8, 15, { duration = self.step / 2.0 }),
+        -- Tail(self.palette.tail, 9, 15, { duration = self.step / 2.0 }),
+        -- Tail(self.palette.tail, 10, 15, { duration = self.step / 2.0 }),
+        -- Tail(self.palette.tail, 11, 15, { duration = self.step / 2.0 })
     }
 
     self.fruits = {}
     if not self.starting_fruits then self.starting_fruits = 1 end
     for i = 1, self.starting_fruits do
-        self:add_fruit()
+        self:add_fruit(true)
     end
 end
 
 function BaseSnek:update(dt)
     if input:pressed('pause') then self.running = not self.running end
     if input:pressed('restart') then self:init() end
+
+    self.head:update(dt)
+    for i, v in ipairs(self.tail) do v:update(dt) end
+    for i, v in ipairs(self.fruits) do v:update(dt) end
 
     if self.running and self.alive then
         if input:pressed('up') and self.mov.y == 0 then self.next_mov = { x = 0, y = -1 } end
@@ -91,17 +125,17 @@ function BaseSnek:update(dt)
             self.timer = self.timer - self.step
             self:do_step()
         end
+
+        -- local state = love.keyboard.isDown('q')
+        -- if state and not self.last_state then self:do_step() end
+        -- self.last_state = state
     end
 end
 
 function BaseSnek:draw()
-    -- Fruits
+    -- Blocks
     for i = 1, #self.fruits do self.fruits[i]:draw() end
-
-    -- Tail
     for i = 1, #self.tail do self.tail[i]:draw() end
-
-    -- Head
     self.head:draw()
 
     -- Grid
@@ -133,6 +167,11 @@ function BaseSnek:draw()
     love.graphics.printRight('Record', 32, 22)
     love.graphics.setFont(fonts.medium_bold)
     love.graphics.printRight(tostring(self.record.score or '???'), 32, 48)
+
+    --- Debug
+    -- love.graphics.setFont(fonts.medium_bold)
+    -- love.graphics.printRight(string.format('(%.2f, %.2f)', self.tail[1].x, self.tail[1].y), 32, 96)
+    -- love.graphics.printRight(string.format('(%.2f, %.2f)', self.tail[1]._x, self.tail[1]._y), 32, 115)
 end
 
 function BaseSnek:draw_tile(pos)
@@ -149,12 +188,32 @@ function BaseSnek:do_step()
     }
 
     for i = #self.tail, 2, -1 do
-        self.tail[i].x = self.tail[i - 1].x
-        self.tail[i].y = self.tail[i - 1].y
+        self.tail[i].next_pos = {
+            x = self.tail[i - 1].x,
+            y = self.tail[i - 1].y
+        }
+
+        if self.tail[i - 1].prev_pos then
+            self.tail[i].next_pos = {
+                x = self.tail[i - 1].prev_pos.x,
+                y = self.tail[i - 1].prev_pos.y
+            }
+
+            self.tail[i - 1].prev_pos = nil
+        else
+            self.tail[i].next_pos = {
+                x = self.tail[i - 1].x,
+                y = self.tail[i - 1].y
+            }
+        end
     end
 
-    self.tail[1].x = self.head.x
-    self.tail[1].y = self.head.y
+    if self.head.prev_pos then
+        self.tail[1].next_pos = { x = self.head.prev_pos.x, y = self.head.prev_pos.y }
+        self.head.prev_pos = nil
+    else
+        self.tail[1].next_pos = { x = self.head.x, y = self.head.y }
+    end
 
     -- Head movement
     if self.next_mov then
@@ -164,25 +223,22 @@ function BaseSnek:do_step()
         self.next_mov = nil
     end
 
-    self.head.x = self.head.x + self.mov.x
-    self.head.y = self.head.y + self.mov.y
+    self.head.next_pos = { x = self.head.x + self.mov.x, y = self.head.y + self.mov.y }
 
     -- Self collision
-    local head_pos = self.head:getPosition()
     for i, tail in ipairs(self.tail) do
-        if head_pos.x == tail.x and head_pos.y == tail.y then self:on_collision() end
+        if self.head.next_pos.x == tail.x and self.head.next_pos.y == tail.y then self:on_collision() end
     end
 
     -- Fruit catching
-    -- local fruit_index = M.find(self.fruits, self.head:getPosition())
     local fruit_index = nil
     for i, fruit in ipairs(self.fruits) do
-        if head_pos.x == fruit.x and head_pos.y == fruit.y then fruit_index = i end
+        if self.head.next_pos.x == fruit.x and self.head.next_pos.y == fruit.y then fruit_index = i end
     end
 
     if fruit_index then
         self.points = self.points + 1
-        table.insert(self.tail, Block(self.palette.tail, self.last_tail.x, self.last_tail.y))
+        table.insert(self.tail, Tail(self.palette.tail, self.last_tail.x, self.last_tail.y, { duration = self.step / 2.0 }))
 
         self.fruits[fruit_index] = nil
         self.fruits = M.compact(self.fruits)
@@ -190,21 +246,27 @@ function BaseSnek:do_step()
         if self.on_fruit then self.on_fruit(self.parent) end
     end
 
-    -- Warping
-    local arena_width = 31 - BaseSnek.limits.left - BaseSnek.limits.right
-    local arena_height = 31 - BaseSnek.limits.top - BaseSnek.limits.bottom
-    if self.head.x < 0 then self.head.x = arena_width end
-    if self.head.x > arena_width then self.head.x = 0 end
+    for i = #self.tail, 1, -1 do
+        self.tail[i]:step()
+        self.tail[i].duration = self.step / 2.0
+    end
 
-    if self.head.y < 0 then self.head.y = arena_height end
-    if self.head.y > arena_height then self.head.y = 0 end
+    self.head:step()
+    self.head.duration = self.step / 2.0
 end
 
 -- TODO: make sure the fruit doesn't spawn on head, tail, walls or other fruits
-function BaseSnek:add_fruit()
-    local x = love.math.random(BaseSnek.limits.left, 31 - BaseSnek.limits.right)
-    local y = love.math.random(BaseSnek.limits.top, 31 - BaseSnek.limits.bottom)
-    table.insert(self.fruits, Block(self.palette.fruit, x, y))
+function BaseSnek:add_fruit(initial)
+    local x = love.math.random(0, 31 - (BaseSnek.limits.right + BaseSnek.limits.left))
+    local y = love.math.random(0, 31 - (BaseSnek.limits.bottom + BaseSnek.limits.top))
+
+    -- TODO: move animation parameters inside the fruit object file
+    table.insert(self.fruits, Fruit(self.palette.fruit, x, y, {
+        size = initial and 16 or 1,
+        duration = .5,
+        easing = 'out-elastic',
+        appear_on_start = not initial
+    }))
 end
 
 function BaseSnek:on_collision()
