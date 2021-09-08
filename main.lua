@@ -44,7 +44,9 @@ function love.load()
 
     local vec1 = Vector(3, 2)
     local vec2 = Vector(3, 2)
-    print(vec1 + vec2)
+    local vec3 = Vector(4, 2)
+    print(vec1 == vec2)
+    print(vec1 == vec3)
 end
 
 function love.update(dt)

@@ -2,9 +2,7 @@ Fruit = Object:extend()
 
 function Fruit:new(color, x, y, opts)
     self.color = color
-    self.x = x
-    self.y = y
-
+    self.position = Vector(x, y)
     self.timer = Timer()
 
     local opts = opts or {}
@@ -20,15 +18,11 @@ function Fruit:draw()
     love.graphics.setColor(self.color)
     love.graphics.rectangle(
         'fill',
-        (self.x + BaseSnek.limits.left) * 32 + (16 - self.size),
-        (self.y + BaseSnek.limits.top) * 32 + (16 - self.size),
+        (self.position.x + BaseSnek.limits.left) * 32 + (16 - self.size),
+        (self.position.y + BaseSnek.limits.top) * 32 + (16 - self.size),
         self.size * 2,
         self.size * 2
     )
-end
-
-function Fruit:getPosition()
-    return { x = self.x, y = self.y }
 end
 
 function Fruit:appear(after)

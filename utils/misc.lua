@@ -11,3 +11,7 @@ function clamp01(val)
     if val > 1 then return 1 end
     return val
 end
+
+function multibind(keys, action)
+    for i, v in ipairs(keys) do input:bind(v, action) end
+end

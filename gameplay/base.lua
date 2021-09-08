@@ -18,8 +18,8 @@
     - TODO: dynamic start positions
     - TODO: add arrows on controls
     - TODO: add settings object on new
-
-    - TODO: convert every position to Vector2?
+    - TODO: pause screen
+    - TODO: game over screen
 ]]
 
 BaseSnek = Object:extend()
@@ -33,6 +33,7 @@ BaseSnek.limits = {
 
 ------------------------------------------------------------------------------
 
+-- TODO: add move vector methods instead of call for x and then for y
 function BaseSnek.warp(pos)
     local arena_width = 31 - BaseSnek.limits.left - BaseSnek.limits.right
     local arena_height = 31 - BaseSnek.limits.top - BaseSnek.limits.bottom
@@ -49,7 +50,7 @@ function BaseSnek.warp(pos)
     if y > arena_height then y = 0; yo = -1 end
 
     local warped = pos.x ~= x or pos.y ~= y
-    return warped, { x = x, y = y}, { x = xo, y = yo }
+    return warped, Vector(x, y), Vector(xo, yo)
 end
 
 ------------------------------------------------------------------------------
@@ -62,14 +63,15 @@ function BaseSnek:new(parent)
 
     input:bind('r', 'restart')
 
-    input:bind('w', 'up')
+    -- TODO: complete conversion to multibind
+    -- input:bind('w', 'up')
+    multibind({ 'w', 'up' }, 'up')
     input:bind('a', 'left')
     input:bind('s', 'down')
     input:bind('d', 'right')
-
+    
     -- Load record
     self.record = serial:getRecord(self.parent.handle)
-
     self.palette = palettes.classic
 
     love.graphics.setBackgroundColor(self.palette.background)
@@ -84,7 +86,7 @@ function BaseSnek:init()
     self.total_timer = 0
     self.step = self.step_initial or .25
 
-    self.mov = { x = -1, y = 0 }
+    self.mov = Vector(-1, 0)
     self.next_mov = nil
 
     self.head = Head(self.palette.head, 5, 15, { duration = self.step / 2.0 })
@@ -113,10 +115,10 @@ function BaseSnek:update(dt)
     for i, v in ipairs(self.fruits) do v:update(dt) end
 
     if self.running and self.alive then
-        if input:pressed('up') and self.mov.y == 0 then self.next_mov = { x = 0, y = -1 } end
-        if input:pressed('down') and self.mov.y == 0 then self.next_mov = { x = 0, y = 1 } end
-        if input:pressed('left') and self.mov.x == 0 then self.next_mov = { x = -1, y = 0 } end
-        if input:pressed('right') and self.mov.x == 0 then self.next_mov = { x = 1, y = 0 } end
+        if input:pressed('up') and self.mov.y == 0 then self.next_mov = Vector(0, -1) end
+        if input:pressed('down') and self.mov.y == 0 then self.next_mov = Vector(0, 1) end
+        if input:pressed('left') and self.mov.x == 0 then self.next_mov = Vector(-1, 0) end
+        if input:pressed('right') and self.mov.x == 0 then self.next_mov = Vector(1, 0) end
 
         self.timer = self.timer + dt
         self.total_timer = self.total_timer + dt
@@ -174,66 +176,46 @@ function BaseSnek:draw()
     -- love.graphics.printRight(string.format('(%.2f, %.2f)', self.tail[1]._x, self.tail[1]._y), 32, 115)
 end
 
-function BaseSnek:draw_tile(pos)
-    love.graphics.rectangle('fill', pos.x * 32, pos.y * 32, 32, 32)
-end
-
 function BaseSnek:do_step()
     if self.on_step then self.on_step(self.parent) end
 
-    -- Tail following
-    self.last_tail = {
-        x = self.tail[#self.tail].x,
-        y = self.tail[#self.tail].y
-    }
+    self.last_tail = self.tail[#self.tail].position:copy()
 
     for i = #self.tail, 2, -1 do
-        self.tail[i].next_pos = {
-            x = self.tail[i - 1].x,
-            y = self.tail[i - 1].y
-        }
+        self.tail[i].next_pos = self.tail[i - 1].position:copy()
 
         if self.tail[i - 1].prev_pos then
-            self.tail[i].next_pos = {
-                x = self.tail[i - 1].prev_pos.x,
-                y = self.tail[i - 1].prev_pos.y
-            }
-
+            self.tail[i].next_pos = self.tail[i - 1].prev_pos:copy()
             self.tail[i - 1].prev_pos = nil
         else
-            self.tail[i].next_pos = {
-                x = self.tail[i - 1].x,
-                y = self.tail[i - 1].y
-            }
+            self.tail[i].next_pos = self.tail[i - 1].position:copy()
         end
     end
 
     if self.head.prev_pos then
-        self.tail[1].next_pos = { x = self.head.prev_pos.x, y = self.head.prev_pos.y }
+        self.tail[1].next_pos = self.head.prev_pos:copy()
         self.head.prev_pos = nil
     else
-        self.tail[1].next_pos = { x = self.head.x, y = self.head.y }
+        self.tail[1].next_pos = self.head.position:copy()
     end
 
     -- Head movement
     if self.next_mov then
-        self.mov.x = self.next_mov.x
-        self.mov.y = self.next_mov.y
-
+        self.mov = self.next_mov:copy()
         self.next_mov = nil
     end
 
-    self.head.next_pos = { x = self.head.x + self.mov.x, y = self.head.y + self.mov.y }
+    self.head.next_pos = self.head.position + self.mov
 
     -- Self collision
     for i, tail in ipairs(self.tail) do
-        if self.head.next_pos.x == tail.x and self.head.next_pos.y == tail.y then self:on_collision() end
+        if self.head.next_pos == tail.position then self:on_collision() end
     end
 
     -- Fruit catching
     local fruit_index = nil
     for i, fruit in ipairs(self.fruits) do
-        if self.head.next_pos.x == fruit.x and self.head.next_pos.y == fruit.y then fruit_index = i end
+        if self.head.next_pos == fruit.position then fruit_index = i end
     end
 
     if fruit_index then
