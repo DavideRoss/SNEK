@@ -11,13 +11,10 @@
     - on_death
 
     FUNCTIONS
-    - add_fruit (TODO: make it plural)
-    - decrease_step TODO:
+    - add_fruits
 
     - TODO: add custom blocks support (walls...)
     - TODO: dynamic start positions
-    - TODO: add arrows on controls
-    - TODO: add settings object on new
     - TODO: pause screen
     - TODO: game over screen
 ]]
@@ -55,7 +52,7 @@ end
 
 ------------------------------------------------------------------------------
 
-function BaseSnek:new(parent)
+function BaseSnek:new(parent, opts)
     self.parent = parent
 
     input:bind('escape', 'pause')
@@ -63,12 +60,16 @@ function BaseSnek:new(parent)
 
     input:bind('r', 'restart')
 
-    -- TODO: complete conversion to multibind
-    -- input:bind('w', 'up')
     multibind({ 'w', 'up' }, 'up')
-    input:bind('a', 'left')
-    input:bind('s', 'down')
-    input:bind('d', 'right')
+    multibind({ 'a', 'left' }, 'left')
+    multibind({ 's', 'down' }, 'down')
+    multibind({ 'd', 'right' }, 'right')
+
+    local opts = opts or {}
+    if opts then for k, v in pairs(opts) do self[k] = v end end
+
+    self.block_definitions = {}
+    self.blocks = {}
     
     -- Load record
     self.record = serial:getRecord(self.parent.handle)
@@ -93,17 +94,11 @@ function BaseSnek:init()
     self.tail = {
         Tail(self.palette.tail, 6, 15, { duration = self.step / 2.0 }),
         Tail(self.palette.tail, 7, 15, { duration = self.step / 2.0 })
-        -- Tail(self.palette.tail, 8, 15, { duration = self.step / 2.0 }),
-        -- Tail(self.palette.tail, 9, 15, { duration = self.step / 2.0 }),
-        -- Tail(self.palette.tail, 10, 15, { duration = self.step / 2.0 }),
-        -- Tail(self.palette.tail, 11, 15, { duration = self.step / 2.0 })
     }
 
     self.fruits = {}
     if not self.starting_fruits then self.starting_fruits = 1 end
-    for i = 1, self.starting_fruits do
-        self:add_fruit(true)
-    end
+    self:add_fruits(self.starting_fruits, true)
 end
 
 function BaseSnek:update(dt)
@@ -238,17 +233,19 @@ function BaseSnek:do_step()
 end
 
 -- TODO: make sure the fruit doesn't spawn on head, tail, walls or other fruits
-function BaseSnek:add_fruit(initial)
-    local x = love.math.random(0, 31 - (BaseSnek.limits.right + BaseSnek.limits.left))
-    local y = love.math.random(0, 31 - (BaseSnek.limits.bottom + BaseSnek.limits.top))
+function BaseSnek:add_fruits(count, initial)
+    for i = 1, count do
+        local x = love.math.random(0, 31 - (BaseSnek.limits.right + BaseSnek.limits.left))
+        local y = love.math.random(0, 31 - (BaseSnek.limits.bottom + BaseSnek.limits.top))
 
-    -- TODO: move animation parameters inside the fruit object file
-    table.insert(self.fruits, Fruit(self.palette.fruit, x, y, {
-        size = initial and 16 or 1,
-        duration = .5,
-        easing = 'out-elastic',
-        appear_on_start = not initial
-    }))
+        -- TODO: move animation parameters inside the fruit object file
+        table.insert(self.fruits, Fruit(self.palette.fruit, x, y, {
+            size = initial and 16 or 1,
+            duration = .5,
+            easing = 'out-elastic',
+            appear_on_start = not initial
+        }))
+    end
 end
 
 function BaseSnek:on_collision()
@@ -263,4 +260,19 @@ function BaseSnek:on_collision()
     end
 
     if self.on_death then self.on_death(self.parent) end
+end
+
+function BaseSnek:add_block_definition(id, palette_ref, solid)
+    for i, v in ipairs(self.blocks) do
+        print(v.id)
+        if v.id == id then error('Block "' .. id .. '" already exists!') end
+    end
+
+    table.insert(self.block_definitions, {
+        id = id,
+        palette_ref = palette_ref,
+        solid = solid
+    })
+
+    print('Create block ' .. id)
 end

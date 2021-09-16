@@ -41,12 +41,6 @@ function love.load()
     current_room = nil
     -- TODO: replace with StartRoom in production
     goToRoom('ModeClassic')
-
-    local vec1 = Vector(3, 2)
-    local vec2 = Vector(3, 2)
-    local vec3 = Vector(4, 2)
-    print(vec1 == vec2)
-    print(vec1 == vec3)
 end
 
 function love.update(dt)
