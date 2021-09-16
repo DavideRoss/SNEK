@@ -7,13 +7,13 @@
 
     EVENTS
     - on_step
-    - on_fruit
-    - on_death
+    - on_fruit_collision(pos)
+    - on_self_collision(pos)
+    - on_block_collision(id)
 
     FUNCTIONS
     - add_fruits
 
-    - TODO: add custom blocks support (walls...)
     - TODO: dynamic start positions
     - TODO: pause screen
     - TODO: game over screen
@@ -131,6 +131,12 @@ end
 
 function BaseSnek:draw()
     -- Blocks
+    for i, block in ipairs(self.blocks) do
+        love.graphics.setColor(self.palette[block.definition.palette_ref])
+        love.graphics.rectangle('fill', (block.position.x + BaseSnek.limits.left) * 32, (block.position.y + BaseSnek.limits.top) * 32, 32, 32)
+    end
+    
+    -- Elements
     for i = 1, #self.fruits do self.fruits[i]:draw() end
     for i = 1, #self.tail do self.tail[i]:draw() end
     self.head:draw()
@@ -204,7 +210,18 @@ function BaseSnek:do_step()
 
     -- Self collision
     for i, tail in ipairs(self.tail) do
-        if self.head.next_pos == tail.position then self:on_collision() end
+        -- TODO: cancel animation on collision
+        if self.head.next_pos == tail.position then if self.on_self_collision then self.on_self_collision(self.parent) end end
+    end
+
+    -- Block collision
+    for i, block in ipairs(self.blocks) do
+        if self.head.next_pos == block.position then
+            if self.on_block_collision then
+                print(block.definition.id)
+                self.on_block_collision(self.parent, block.definition.id)
+            end
+        end
     end
 
     -- Fruit catching
@@ -217,10 +234,11 @@ function BaseSnek:do_step()
         self.points = self.points + 1
         table.insert(self.tail, Tail(self.palette.tail, self.last_tail.x, self.last_tail.y, { duration = self.step / 2.0 }))
 
+        local pos = self.fruits[fruit_index].position
         self.fruits[fruit_index] = nil
         self.fruits = M.compact(self.fruits)
 
-        if self.on_fruit then self.on_fruit(self.parent) end
+        if self.on_fruit_collision then self.on_fruit_collision(self.parent, pos) end
     end
 
     for i = #self.tail, 1, -1 do
@@ -232,7 +250,7 @@ function BaseSnek:do_step()
     self.head.duration = self.step / 2.0
 end
 
--- TODO: make sure the fruit doesn't spawn on head, tail, walls or other fruits
+-- TODO: make sure the fruit doesn't spawn on head, tail, walls or other fruits (or blocks)
 function BaseSnek:add_fruits(count, initial)
     for i = 1, count do
         local x = love.math.random(0, 31 - (BaseSnek.limits.right + BaseSnek.limits.left))
@@ -248,7 +266,7 @@ function BaseSnek:add_fruits(count, initial)
     end
 end
 
-function BaseSnek:on_collision()
+function BaseSnek:die()
     self.alive = false
 
     if self.record.score == nil or self.points > self.record.score then
@@ -258,21 +276,27 @@ function BaseSnek:on_collision()
         serial:setRecord(self.parent.handle, self.points, self.total_timer)
         serial:save()
     end
-
-    if self.on_death then self.on_death(self.parent) end
 end
 
-function BaseSnek:add_block_definition(id, palette_ref, solid)
-    for i, v in ipairs(self.blocks) do
+function BaseSnek:add_block_definition(id, palette_ref)
+    for i, v in ipairs(self.block_definitions) do
         print(v.id)
         if v.id == id then error('Block "' .. id .. '" already exists!') end
     end
 
     table.insert(self.block_definitions, {
         id = id,
-        palette_ref = palette_ref,
-        solid = solid
+        palette_ref = palette_ref
     })
+end
 
-    print('Create block ' .. id)
+function BaseSnek:add_block(id, position)
+    local def = nil
+    for i, v in ipairs(self.block_definitions) do if v.id == id then def = v end end
+    if def == nil then error ('Missing "' .. id .. '" block definition!') end
+
+    table.insert(self.blocks, {
+        definition = def,
+        position = position,
+    })
 end

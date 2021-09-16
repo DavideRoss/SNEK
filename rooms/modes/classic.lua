@@ -6,18 +6,20 @@ function ModeClassic:new()
     self.base = BaseSnek(self, {
         starting_fruits = 30,
         step_initial = .25,
-        on_fruit = self.on_fruit,
-        on_death = self.on_death
+
+        on_fruit_collision = self.on_fruit_collision,
+        on_self_collision = self.on_self_collision,
+        on_block_collision = self.on_block_collision
     })
 
     self.palette = palettes.classic
-    -- self.base.starting_fruits = 30
-    -- self.base.step_initial = .25
-    
-    -- self.base.on_fruit = self.on_fruit
-    -- self.base.on_death = self.on_death
 
-    self.base:add_block_definition('wall', 'wall', true)
+    -- self.base:add_block_definition('wall', 'wall')
+
+    -- for x = 0, 29 do
+    --     self.base:add_block('wall', Vector(x, 0))
+    --     self.base:add_block('wall', Vector(x, 26))
+    -- end
 
     self.base:init()
 
@@ -32,15 +34,16 @@ function ModeClassic:draw()
     self.base:draw(dt)
 end
 
-function ModeClassic:on_step()
-    -- print(self.test)
-end
-
-function ModeClassic:on_fruit()
+function ModeClassic:on_fruit_collision(pos)
+    
     self.base:add_fruits(1)
     if self.base.step > .05 then self.base.step = self.base.step - .0025 end
 end
 
-function ModeClassic:on_death()
-    print('on death trigger')
+function ModeClassic:on_self_collision()
+    self.base:die()
+end
+
+function ModeClassic:on_block_collision(id)
+    if id == 'wall' then self.base:die() end
 end

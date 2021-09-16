@@ -34,7 +34,7 @@ palettes = {
         head = rgb('#e76f51'),
         tail = rgb('#f4a261'),
         fruit = rgb('#e9c46a'),
-        wall = rgb('#264653'),
+        wall = rgb('#1c2a30'),
         text = rgb('#ffffff')
     }
 }
